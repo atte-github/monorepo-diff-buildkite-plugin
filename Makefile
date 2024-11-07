@@ -13,13 +13,17 @@ test-go:
 .PHONY: build-docker-test
 build-docker-test:
 ifneq (${HAS_DOCKER},)
-	docker-compose build plugin_test
+	docker build -t ${NAME}-test .
+else
+	$(warning Docker not available; skipping Docker build for tests)
 endif
 
 .PHONY: test-docker
 test-docker: build-docker-test
 ifneq (${HAS_DOCKER},)
-	docker-compose run --rm plugin_test
+	docker run --rm ${NAME}-test go test -race -coverprofile=coverage.out -covermode=atomic
+else
+	$(warning Docker not available; skipping Docker test)
 endif
 
 .PHONY: test
@@ -31,7 +35,9 @@ quality:
 	go fmt
 	go mod tidy
 ifneq (${HAS_DOCKER},)
-	docker-compose run --rm plugin_lint
+	docker run --rm ${NAME}-lint go vet ./...
+else
+	$(warning Docker not available; skipping Docker linting)
 endif
 
 .PHONY: build
